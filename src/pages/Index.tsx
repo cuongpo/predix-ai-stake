@@ -11,12 +11,31 @@ import { Wallet, Brain, TrendingUp } from "lucide-react";
 const Index = () => {
   const [walletConnected, setWalletConnected] = useState(false);
 
-  const handleConnectWallet = () => {
-    // Simulate wallet connection
-    setWalletConnected(true);
-    toast.success("Wallet Connected!", {
-      description: "You're ready to start predicting with AI",
-    });
+  const handleConnectWallet = async () => {
+    if (typeof window.ethereum === 'undefined') {
+      toast.error("MetaMask not detected", {
+        description: "Please install MetaMask to connect your wallet",
+      });
+      return;
+    }
+
+    try {
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+      
+      if (accounts && accounts.length > 0) {
+        setWalletConnected(true);
+        toast.success("Wallet Connected!", {
+          description: "You're ready to start predicting with AI",
+        });
+      }
+    } catch (error) {
+      toast.error("Connection failed", {
+        description: "Please try again or check your wallet",
+      });
+      console.error("Wallet connection error:", error);
+    }
   };
 
   const handleStake = (direction: "follow" | "counter", amount: number) => {
