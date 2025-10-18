@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, Brain, Timer, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Brain, Timer, DollarSign, Wallet } from "lucide-react";
 
 interface PredictionCardProps {
   onStake: (direction: "follow" | "counter", amount: number) => void;
@@ -13,18 +13,20 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
   const [phase, setPhase] = useState<RoundPhase>("voting");
   const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutes in seconds
   const [aiPrediction, setAiPrediction] = useState<"up" | "down">("up");
-  const [maticPrice, setMaticPrice] = useState(0.72);
-  const [startPrice, setStartPrice] = useState(0.72);
+  const [btcPrice, setBtcPrice] = useState(67234.56);
+  const [markedPrice, setMarkedPrice] = useState(67234.56);
   const [stakeAmount, setStakeAmount] = useState(10);
   const [userChoice, setUserChoice] = useState<"follow" | "counter" | null>(null);
   const [roundResult, setRoundResult] = useState<"win" | "lose" | null>(null);
+  const [roundId, setRoundId] = useState(1);
+  const [userBalance] = useState(1000); // User's POL balance
 
-  // Simulate MATIC price fluctuation
+  // Simulate BTC price fluctuation
   useEffect(() => {
     const priceInterval = setInterval(() => {
-      setMaticPrice(prev => {
-        const change = (Math.random() - 0.5) * 0.02;
-        return Number((prev + change).toFixed(4));
+      setBtcPrice(prev => {
+        const change = (Math.random() - 0.5) * 100;
+        return Number((prev + change).toFixed(2));
       });
     }, 3000);
 
@@ -38,12 +40,13 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
         if (prev <= 1) {
           // Phase transition
           if (phase === "voting") {
+            // Mark the BTC price when voting ends
+            setMarkedPrice(btcPrice);
             setPhase("frozen");
-            setStartPrice(maticPrice);
             return 300; // 5 minutes frozen
           } else if (phase === "frozen") {
-            // Calculate result
-            const priceChange = maticPrice - startPrice;
+            // Calculate result based on marked price vs current price
+            const priceChange = btcPrice - markedPrice;
             const actualDirection = priceChange >= 0 ? "up" : "down";
             const aiWasRight = actualDirection === aiPrediction;
             
@@ -58,6 +61,7 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
           } else {
             // Reset for new round
             setPhase("voting");
+            setRoundId(prev => prev + 1);
             setAiPrediction(Math.random() > 0.5 ? "up" : "down");
             setUserChoice(null);
             setRoundResult(null);
@@ -69,7 +73,7 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [phase, maticPrice, startPrice, aiPrediction, userChoice]);
+  }, [phase, btcPrice, markedPrice, aiPrediction, userChoice]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -91,6 +95,18 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent animate-pulse-glow" />
       
       <div className="relative z-10 space-y-6">
+        {/* Round ID & User Balance */}
+        <div className="flex items-center justify-between">
+          <div className="px-3 py-1.5 rounded-lg bg-secondary border border-primary/20">
+            <span className="text-xs text-muted-foreground">Round #</span>
+            <span className="text-lg font-bold ml-1">{roundId}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-primary/20">
+            <Wallet className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold">{userBalance} POL</span>
+          </div>
+        </div>
+
         {/* Phase Badge */}
         <div className="text-center">
           <div className={`inline-block px-4 py-2 rounded-full font-bold text-sm ${
@@ -106,18 +122,23 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
           </div>
         </div>
 
-        {/* MATIC Price Display */}
+        {/* BTC Price Display */}
         <div className="p-4 rounded-xl bg-secondary border border-primary/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-primary" />
-              <span className="text-sm text-muted-foreground">MATIC Price</span>
+              <span className="text-sm text-muted-foreground">BTC Price</span>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold">${maticPrice.toFixed(4)}</p>
+              <p className="text-2xl font-bold">${btcPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               {phase === "frozen" && (
                 <p className="text-xs text-muted-foreground">
-                  Start: ${startPrice.toFixed(4)}
+                  Marked: ${markedPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              )}
+              {phase === "results" && (
+                <p className="text-xs text-muted-foreground">
+                  Marked: ${markedPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} → Final: ${btcPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               )}
             </div>
@@ -139,7 +160,7 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
               ) : (
                 <TrendingDown className="w-16 h-16 animate-bounce" />
               )}
-              <p className="text-4xl font-bold">MATIC {aiPrediction === "up" ? "↑" : "↓"}</p>
+              <p className="text-4xl font-bold">BTC {aiPrediction === "up" ? "↑" : "↓"}</p>
               <p className="text-sm opacity-90">
                 {phase === "voting" ? "Next 5 minutes" : 
                  phase === "frozen" ? "Waiting for result..." : 
@@ -178,15 +199,17 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
           <>
             {/* Stake Amount */}
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Stake Amount (MATIC)</label>
+              <label className="text-sm text-muted-foreground">Stake Amount (POL)</label>
               <input
                 type="number"
                 min="1"
+                max={userBalance}
                 value={stakeAmount}
                 onChange={(e) => setStakeAmount(Number(e.target.value))}
                 className="w-full h-12 px-4 bg-secondary border border-primary/20 rounded-lg text-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={userChoice !== null}
               />
+              <p className="text-xs text-muted-foreground">Available: {userBalance} POL</p>
             </div>
 
             {/* Action Buttons */}
@@ -216,7 +239,7 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
             {userChoice && (
               <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
                 <p className="font-bold">
-                  ✓ You {userChoice === "follow" ? "FOLLOWED" : "COUNTERED"} the AI with {stakeAmount} MATIC
+                  ✓ You {userChoice === "follow" ? "FOLLOWED" : "COUNTERED"} the AI with {stakeAmount} POL
                 </p>
               </div>
             )}
@@ -252,7 +275,7 @@ export const PredictionCard = ({ onStake }: PredictionCardProps) => {
             {roundResult === "lose" && (
               <>
                 <p className="text-2xl font-bold text-bearish mb-2">💔 BETTER LUCK NEXT TIME</p>
-                <p className="text-sm">You'll receive 20% cashback: {(stakeAmount * 0.2).toFixed(2)} MATIC</p>
+                <p className="text-sm">You'll receive 20% cashback: {(stakeAmount * 0.2).toFixed(2)} POL</p>
               </>
             )}
             {!roundResult && (

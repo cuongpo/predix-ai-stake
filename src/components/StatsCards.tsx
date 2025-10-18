@@ -11,7 +11,7 @@ export const StatsCards = () => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Total Pool</p>
-            <p className="text-2xl font-bold">12,450 MATIC</p>
+            <p className="text-2xl font-bold">12,450 POL</p>
           </div>
         </div>
       </Card>
@@ -46,8 +46,8 @@ export const StatsCards = () => {
             <TrendingUp className="w-6 h-6 text-bearish" />
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">MATIC Price</p>
-            <p className="text-2xl font-bold">$0.72</p>
+            <p className="text-sm text-muted-foreground">BTC Price</p>
+            <p className="text-2xl font-bold">$67,234</p>
           </div>
         </div>
       </Card>

@@ -45,7 +45,7 @@ const Index = () => {
     }
 
     toast.success(
-      `Staked ${amount} MATIC!`,
+      `Staked ${amount} POL!`,
       {
         description: `You ${direction === "follow" ? "followed" : "countered"} the AI prediction`,
       }
@@ -89,11 +89,11 @@ const Index = () => {
               Predict with AI,
               <br />
               <span className="gradient-primary bg-clip-text text-transparent">
-                Win with MATIC
+                Win with POL
               </span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Every 5 minutes, our AI predicts MATIC price movements. Follow the AI or counter it - 
+              Every 5 minutes, our AI predicts BTC price movements. Follow the AI or counter it - 
               winners take the pool, losers get 20% cashback.
             </p>
             <div className="flex gap-4 justify-center">
