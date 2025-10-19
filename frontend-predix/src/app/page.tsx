@@ -128,7 +128,7 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <LiveChart data={priceData} />
+                <LiveChart data={priceData.priceHistory} />
               </CardContent>
             </Card>
           </TabsContent>

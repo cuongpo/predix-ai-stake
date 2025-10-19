@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useContractWrite, useContractRead, useWaitForTransaction } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { usePrepareContractWrite, useContractWrite, useContractRead, useWaitForTransaction } from 'wagmi'
 import { parseEther } from 'viem'
 import toast from 'react-hot-toast'
 
@@ -59,43 +59,46 @@ const PREDICTION_POOL_ABI = [
   }
 ] as const
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_PREDICTION_POOL_ADDRESS as `0x${string}`
+const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_PREDICTION_POOL_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`
 
 export function usePredictionContract() {
   const [isLoading, setIsLoading] = useState(false)
 
-  // Stake Follow AI
-  const { 
-    data: stakeFollowData, 
-    write: writeStakeFollow,
-    isLoading: isStakeFollowLoading 
-  } = useContractWrite({
+  const [stakeFollowArgs, setStakeFollowArgs] = useState<{ roundId: number; amount: bigint } | undefined>()
+  const [stakeCounterArgs, setStakeCounterArgs] = useState<{ roundId: number; amount: bigint } | undefined>()
+  const [claimRewardArgs, setClaimRewardArgs] = useState<{ roundId: number } | undefined>()
+
+  // Prepare Stake Follow
+  const { config: stakeFollowConfig } = usePrepareContractWrite({
     address: CONTRACT_ADDRESS,
     abi: PREDICTION_POOL_ABI,
     functionName: 'stakeFollow',
-  })
+    args: stakeFollowArgs ? [BigInt(stakeFollowArgs.roundId)] : undefined,
+    value: stakeFollowArgs?.amount,
+    enabled: !!stakeFollowArgs,
+  });
+  const { data: stakeFollowData, write: writeStakeFollow, isLoading: isStakeFollowLoading } = useContractWrite(stakeFollowConfig);
 
-  // Stake Counter AI
-  const { 
-    data: stakeCounterData, 
-    write: writeStakeCounter,
-    isLoading: isStakeCounterLoading 
-  } = useContractWrite({
+  // Prepare Stake Counter
+  const { config: stakeCounterConfig } = usePrepareContractWrite({
     address: CONTRACT_ADDRESS,
     abi: PREDICTION_POOL_ABI,
     functionName: 'stakeCounter',
-  })
+    args: stakeCounterArgs ? [BigInt(stakeCounterArgs.roundId)] : undefined,
+    value: stakeCounterArgs?.amount,
+    enabled: !!stakeCounterArgs,
+  });
+  const { data: stakeCounterData, write: writeStakeCounter, isLoading: isStakeCounterLoading } = useContractWrite(stakeCounterConfig);
 
-  // Claim Reward
-  const { 
-    data: claimRewardData, 
-    write: writeClaimReward,
-    isLoading: isClaimRewardLoading 
-  } = useContractWrite({
+  // Prepare Claim Reward
+  const { config: claimRewardConfig } = usePrepareContractWrite({
     address: CONTRACT_ADDRESS,
     abi: PREDICTION_POOL_ABI,
     functionName: 'claimReward',
-  })
+    args: claimRewardArgs ? [BigInt(claimRewardArgs.roundId)] : undefined,
+    enabled: !!claimRewardArgs,
+  });
+  const { data: claimRewardData, write: writeClaimReward, isLoading: isClaimRewardLoading } = useContractWrite(claimRewardConfig);
 
   // Wait for transactions
   const { isLoading: isStakeFollowTxLoading } = useWaitForTransaction({
@@ -138,46 +141,41 @@ export function usePredictionContract() {
   })
 
   // Contract functions
-  const stakeFollow = async (roundId: number, amount: bigint) => {
-    try {
-      setIsLoading(true)
-      writeStakeFollow({
-        args: [BigInt(roundId)],
-        value: amount,
-      })
-    } catch (error) {
-      console.error('Stake Follow error:', error)
-      toast.error('Failed to stake')
-      setIsLoading(false)
+  useEffect(() => {
+    if (stakeFollowArgs && writeStakeFollow) {
+      writeStakeFollow();
+      setStakeFollowArgs(undefined);
     }
-  }
+  }, [stakeFollowArgs, writeStakeFollow]);
 
-  const stakeCounter = async (roundId: number, amount: bigint) => {
-    try {
-      setIsLoading(true)
-      writeStakeCounter({
-        args: [BigInt(roundId)],
-        value: amount,
-      })
-    } catch (error) {
-      console.error('Stake Counter error:', error)
-      toast.error('Failed to stake')
-      setIsLoading(false)
+  useEffect(() => {
+    if (stakeCounterArgs && writeStakeCounter) {
+      writeStakeCounter();
+      setStakeCounterArgs(undefined);
     }
-  }
+  }, [stakeCounterArgs, writeStakeCounter]);
 
-  const claimReward = async (roundId: number) => {
-    try {
-      setIsLoading(true)
-      writeClaimReward({
-        args: [BigInt(roundId)],
-      })
-    } catch (error) {
-      console.error('Claim Reward error:', error)
-      toast.error('Failed to claim reward')
-      setIsLoading(false)
+  useEffect(() => {
+    if (claimRewardArgs && writeClaimReward) {
+      writeClaimReward();
+      setClaimRewardArgs(undefined);
     }
-  }
+  }, [claimRewardArgs, writeClaimReward]);
+
+  const stakeFollow = (roundId: number, amount: bigint) => {
+    setIsLoading(true);
+    setStakeFollowArgs({ roundId, amount });
+  };
+
+  const stakeCounter = (roundId: number, amount: bigint) => {
+    setIsLoading(true);
+    setStakeCounterArgs({ roundId, amount });
+  };
+
+  const claimReward = (roundId: number) => {
+    setIsLoading(true);
+    setClaimRewardArgs({ roundId });
+  };
 
   // Read functions
   const useGetUserStake = (roundId: number, userAddress: `0x${string}` | undefined) => {
@@ -208,9 +206,9 @@ export function usePredictionContract() {
     claimReward,
     
     // Loading states
-    isLoading: isLoading || 
-               isStakeFollowLoading || 
-               isStakeCounterLoading || 
+    isLoading: isLoading ||
+               isStakeFollowLoading ||
+               isStakeCounterLoading ||
                isClaimRewardLoading ||
                isStakeFollowTxLoading ||
                isStakeCounterTxLoading ||

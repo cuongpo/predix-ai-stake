@@ -205,7 +205,7 @@ export function PredictionCard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setStakeAmount(balance ? formatEther(balance.value / 2n) : '0')}
+                  onClick={() => setStakeAmount(balance ? formatEther(balance.value / BigInt(2)) : '0')}
                   className="whitespace-nowrap"
                 >
                   50%
