@@ -1,0 +1,17 @@
+{
+  "network": "80002",
+  "timestamp": "2025-10-19T06:13:59.385Z",
+  "deployer": "0x03Ae517C41d93B128bfDF9AB1F13bD54d50a8307",
+  "contracts": {
+    "RoundManager": "0x12A4002996170563F3d3A6311cF9852C6d19cF6B",
+    "PredictionPool": "0x20b7AAEE20977201551DA417f77364fE0003e7b8",
+    "OracleHandler": "0x3D1C828bAAAE2E961028c9d59768F223AE3934dc",
+    "RewardManager": "0x3278387B120Cee957c14ea8e38c5Cd84f96b82Cb",
+    "AIOracleAdapter": "0x2Bf314498d2Da0deC2F5E59d3b026931aC076DD8"
+  },
+  "configuration": {
+    "treasury": "0x03Ae517C41d93B128bfDF9AB1F13bD54d50a8307",
+    "aiOperator": "0x03Ae517C41d93B128bfDF9AB1F13bD54d50a8307",
+    "priceFeed": "0x001382149eBa3441043c1c66972b4772963f5D43"
+  }
+}

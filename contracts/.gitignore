@@ -1,0 +1,38 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Private keys and secrets
+*.key
+*.pem
+private-keys/
+secrets/
+
+# Hardhat files
+cache
+artifacts
+typechain-types
+
+# Node modules
+node_modules
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+
+# Coverage reports
+coverage/
+.nyc_output
+
+# Deployment artifacts (keep deployments/ but ignore sensitive files within)
+deployments/**/solcInputs/
+deployments/**/.chainId
